@@ -1,29 +1,126 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>מחשבון חלוקת טיפים</title>
+  <link href="https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap" rel="stylesheet"/>
+  <meta name="theme-color" content="#007bff"/>
   <style>
-    body { font-family: sans-serif; padding: 2rem; background: #f8f9fa; color: #212529; max-width: 700px; margin: auto; }
-    h1 { text-align: center; }
-    label { display: block; margin: .5rem 0 .2rem; }
-    input, select, button { padding: .5rem; margin-bottom: 1rem; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-    .group { border: 1px solid #ccc; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem; background: #fff; }
-    .flex-row { display: flex; gap: .5rem; align-items: center; }
-    .remove-btn { background: #dc3545; color: white; border: none; padding: .4rem .8rem; border-radius: 4px; cursor: pointer; }
-    .remove-btn:hover { background: #c82333; }
-    .star-options { display: none; gap: .5rem; margin-top: .5rem; }
-    .summary { background: #e9ecef; padding: 1rem; border-radius: 6px; }
-    .highlight { font-weight: bold; font-size: 1.2em; }
+    :root {
+      --bg-color: #f8f9fa;
+      --card-bg: #ffffff;
+      --primary-color: #007bff;
+      --danger-color: #dc3545;
+      --text-color: #212529;
+      --border-radius: 6px;
+      --box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      --gap: 0.75rem;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: var(--gap);
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Alef', sans-serif;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      margin: var(--gap) 0;
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+    h3 {
+      text-align: center;
+      margin: var(--gap) 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    label { display: block; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    input, select {
+      width: 100%;
+      padding: 0.4rem;
+      border: 1px solid #ccc;
+      border-radius: var(--border-radius);
+      font-size: 0.95rem;
+      margin-bottom: var(--gap);
+    }
+    button {
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: var(--border-radius);
+      padding: 0.4rem 0.6rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      display: inline-block;
+      margin: var(--gap) 0 0;
+    }
+    button:hover { opacity: 0.9; }
+    .remove-btn {
+      background: var(--danger-color);
+      padding: 0.3rem 0.5rem;
+      font-size: 0.8rem;
+    }
+    .group {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: var(--gap);
+      margin-bottom: var(--gap);
+    }
+    .bartenders-group {
+      border: 2px solid var(--primary-color);
+    }
+    .dynamic-group {
+      border: 1px solid #ccc;
+    }
+    .flex-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+    }
+    .flex-row input { flex: 1 1 calc(50% - var(--gap)); }
+    .star-options {
+      display: flex;
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+    }
+    .summary {
+      background: var(--card-bg);
+      padding: var(--gap);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      font-size: 0.95rem;
+      line-height: 1.4;
+      margin-top: var(--gap);
+    }
+    .highlight {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 700;
+      font-size: 1.1em;
+      text-align: center;
+    }
+    @media (max-width: 480px) {
+      .flex-row input { flex: 1 1 100%; }
+      body { padding: 0.5rem; }
+      h1 { font-size: 1.5rem; }
+    }
   </style>
 </head>
 <body>
   <h1>מחשבון חלוקת טיפים</h1>
-  <label>סה"כ טיפים (₪):</label>
-  <input type="number" id="totalTip" />
+  <label for="totalTip">סה"כ טיפים (₪):</label>
+  <input type="number" id="totalTip" placeholder="הזן סכום טיפים" />
   <label><input type="checkbox" id="isWeekend" /> משמרת סופ"ש</label>
-  <div class="group">
+  <div class="group bartenders-group">
     <h3>ברמנים</h3>
     <div id="barContainer"></div>
     <button onclick="addWorker('bar')">➕ הוסף ברמן</button>
@@ -33,22 +130,28 @@
     <div id="waiterContainer"></div>
     <button onclick="addWorker('waiter')">➕ הוסף מלצר</button>
   </div>
-  <button onclick="calculateTips()" style="background:#007bff;color:white;">חשב חלוקה</button>
+  <button onclick="calculateTips()">חשב חלוקה</button>
   <div class="summary" id="results"></div>
   <script>
-    let barCount = 0, waiterCount = 0;
+    window.addEventListener('DOMContentLoaded', () => {
+      window.barCount = 0;
+      window.waiterCount = 0;
+      addWorker('bar');
+      addWorker('waiter');
+    });
+
     function addWorker(type) {
       const container = document.getElementById(type + "Container");
-      const id = (type==='bar'? barCount++ : waiterCount++);
+      const id = type === 'bar' ? window.barCount++ : window.waiterCount++;
       const div = document.createElement("div");
-      div.className = "group";
+      div.className = "group dynamic-group";
       div.innerHTML = `
         <div class="flex-row">
           <input placeholder="שם" id="${type}Name${id}" />
           <input type="number" placeholder="שעות עבודה" id="${type}Hours${id}" />
         </div>
         <label><input type="checkbox" id="${type}HasStars${id}" onchange="toggleStars('${type}',${id})" /> כוכבים?</label>
-        <div class="star-options" id="${type}StarsOptions${id}">
+        <div class="star-options" id="${type}StarsOptions${id}" style="display:none">
           <label><input type="radio" name="${type}Stars${id}" value="3" /> 3⭐</label>
           <label><input type="radio" name="${type}Stars${id}" value="4" /> 4⭐</label>
           <label><input type="radio" name="${type}Stars${id}" value="5" /> 5⭐</label>
@@ -57,59 +160,74 @@
       `;
       container.appendChild(div);
     }
-    function toggleStars(type,id){
-      const box=document.getElementById(`${type}StarsOptions${id}`);
-      box.style.display = box.style.display==='flex'? 'none':'flex';
+
+    function toggleStars(type, id) {
+      const box = document.getElementById(`${type}StarsOptions${id}`);
+      box.style.display = box.style.display === 'flex' ? 'none' : 'flex';
     }
-    function getWorkers(type){
-      const container=document.getElementById(type+"Container");
-      const divs=[...container.querySelectorAll(".group")];
-      return divs.map((div,i)=>{
-        const name=div.querySelector(`input[id^=${type}Name]`).value||`עובד ${i+1}`;
-        const hours=parseFloat(div.querySelector(`input[id^=${type}Hours]`).value)||0;
-        let stars=6;
-        if(div.querySelector(`input[id^=${type}HasStars]`).checked){
-          const sel=div.querySelector(`input[name^=${type}Stars]:checked`);
-          if(sel) stars=parseInt(sel.value);
+
+    function getWorkers(type) {
+      const container = document.getElementById(type + "Container");
+      const divs = [...container.querySelectorAll(".group")];
+      return divs.map((div, i) => {
+        const name = div.querySelector(`input[id^=${type}Name]`).value || `עובד ${i+1}`;
+        const hours = parseFloat(div.querySelector(`input[id^=${type}Hours]`).value) || 0;
+        let stars = 6;
+        if (div.querySelector(`input[id^=${type}HasStars]`).checked) {
+          const sel = div.querySelector(`input[name^=${type}Stars]:checked`);
+          if (sel) stars = parseInt(sel.value);
         }
-        return hours>0? {name,hours,stars}:null;
-      }).filter(x=>x);
+        return hours > 0 ? {name, hours, stars} : null;
+      }).filter(x => x);
     }
-    function calculateTips(){
-      const totalTip=parseFloat(document.getElementById("totalTip").value)||0;
-      const isWeekend=document.getElementById("isWeekend").checked;
-      const barTipPercent=isWeekend?0.15:0.12;
-      const barTip=totalTip*barTipPercent;
-      const remainingAfterBar=totalTip-barTip;
-      const waiters=getWorkers("waiter");
-      const effWaitHrs=waiters.reduce((s,w)=>s+w.hours*w.stars,0);
-      const restPerUnit=effWaitHrs? remainingAfterBar/effWaitHrs:0;
-      // מסעדה לוקחת על בסיס שכר שעתי גבוה
-      const hourlyRates=waiters.map(w=>w.hours*w.stars*restPerUnit/w.hours);
-      const restPercent=hourlyRates.some(r=>r>90)?0.17:0.15;
-      const restCut=remainingAfterBar*restPercent;
-      const finalForWaiters=remainingAfterBar-restCut;
-      const adjPerUnit=effWaitHrs? finalForWaiters/effWaitHrs:0;
-      const finalWaitTips=waiters.map(w=>w.hours*w.stars*adjPerUnit);
 
-      const barWorkers=getWorkers("bar");
-      const totalBarHrs=barWorkers.reduce((s,w)=>s+w.hours,0);
-      const barPerH= totalBarHrs? barTip/totalBarHrs:0;
-      const finalBarTips=barWorkers.map(w=>w.hours*barPerH);
+    function calculateTips() {
+      const totalTip = parseFloat(document.getElementById("totalTip").value) || 0;
+      const isWeekend = document.getElementById("isWeekend").checked;
+      const barTipPercent = isWeekend ? 0.15 : 0.12;
+      const barTip = totalTip * barTipPercent;
+      const remainingAfterBar = totalTip - barTip;
 
-      let html=`<div><span class="highlight">סיכום כללי:</span></div>
+      const waiters = getWorkers("waiter");
+      const effUnits = waiters.reduce((sum, w) => sum + w.hours * w.stars, 0);
+      const totalHours = waiters.reduce((sum, w) => sum + w.hours, 0);
+
+      // נסה תחילה להפריש 15%
+      let restPercent = 0.15;
+      let restCut = remainingAfterBar * restPercent;
+      let finalForWaiters = remainingAfterBar - restCut;
+      let avgHourlyWage = totalHours ? finalForWaiters / totalHours : 0;
+
+      // אם השכר השעתי לאחר 15% עולה על 90, הפרש מחדש ב-17%
+      if (avgHourlyWage > 90) {
+        restPercent = 0.17;
+        restCut = remainingAfterBar * restPercent;
+        finalForWaiters = remainingAfterBar - restCut;
+        avgHourlyWage = totalHours ? finalForWaiters / totalHours : 0;
+      }
+
+      const tips = waiters.map(w => w.hours * w.stars * (effUnits ? finalForWaiters / effUnits : 0));
+
+      const barWorkers = getWorkers("bar");
+      const totalBarHrs = barWorkers.reduce((s, w) => s + w.hours, 0);
+      const barTips = barWorkers.map(w => w.hours * (totalBarHrs ? barTip / totalBarHrs : 0));
+
+      let html = `
+        <span class="highlight">סיכום כללי:</span>
         <div>סה"כ טיפ: ₪${totalTip.toFixed(2)}</div>
         <div>הפרשה לבר: ₪${barTip.toFixed(2)} (${(barTipPercent*100).toFixed(0)}%)</div>
         <div>הפרשה למסעדה: ₪${restCut.toFixed(2)} (${(restPercent*100).toFixed(0)}%)</div>
         <div>טיפ נטו למלצרים: ₪${finalForWaiters.toFixed(2)}</div>
-        <div>שכר שעתי למלצרים: ₪${adjPerUnit.toFixed(2)}</div><hr />
-        <div><span class="highlight">פירוט לפי עובד:</span></div>
-        <div><strong>מלצרים:</strong></div>
-        ${waiters.map((w,i)=>`<div>${w.name}: ₪${finalWaitTips[i].toFixed(2)}</div>`).join("")}
-        <div><strong>ברמנים:</strong></div>
-        ${barWorkers.map((w,i)=>`<div>${w.name}: ₪${finalBarTips[i].toFixed(2)}</div>`).join("")}
+        <div>שכר שעתי ממוצע למלצרים: ₪${avgHourlyWage.toFixed(2)}</div>
+        <hr/>
+        <span class="highlight">פירוט לפי עובד:</span>
+        <strong>מלצרים:</strong>
+        ${waiters.map((w,i) => `<div>${w.name}: ₪${tips[i].toFixed(2)} (ש"ש: ₪${(tips[i]/w.hours).toFixed(2)})</div>`).join('')}
+        <strong>ברמנים:</strong>
+        ${barWorkers.map((w,i) => `<div>${w.name}: ₪${barTips[i].toFixed(2)}</div>`).join('')}
       `;
-      document.getElementById("results").innerHTML=html;
+
+      document.getElementById("results").innerHTML = html;
     }
   </script>
 </body>
