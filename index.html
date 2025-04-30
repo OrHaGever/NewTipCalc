@@ -192,13 +192,11 @@
       const effUnits = waiters.reduce((sum, w) => sum + w.hours * w.stars, 0);
       const totalHours = waiters.reduce((sum, w) => sum + w.hours, 0);
 
-      // נסה תחילה להפריש 15%
       let restPercent = 0.15;
       let restCut = remainingAfterBar * restPercent;
       let finalForWaiters = remainingAfterBar - restCut;
       let avgHourlyWage = totalHours ? finalForWaiters / totalHours : 0;
 
-      // אם השכר השעתי לאחר 15% עולה על 90, הפרש מחדש ב-17%
       if (avgHourlyWage > 90) {
         restPercent = 0.17;
         restCut = remainingAfterBar * restPercent;
@@ -209,8 +207,8 @@
       const tips = waiters.map(w => w.hours * w.stars * (effUnits ? finalForWaiters / effUnits : 0));
 
       const barWorkers = getWorkers("bar");
-      const totalBarHrs = barWorkers.reduce((s, w) => s + w.hours, 0);
-      const barTips = barWorkers.map(w => w.hours * (totalBarHrs ? barTip / totalBarHrs : 0));
+      const totalBarUnits = barWorkers.reduce((s, w) => s + w.hours * w.stars, 0);
+      const barTips = barWorkers.map(w => w.hours * w.stars * (totalBarUnits ? barTip / totalBarUnits : 0));
 
       let html = `
         <span class="highlight">סיכום כללי:</span>
@@ -224,7 +222,7 @@
         <strong>מלצרים:</strong>
         ${waiters.map((w,i) => `<div>${w.name}: ₪${tips[i].toFixed(2)} (ש"ש: ₪${(tips[i]/w.hours).toFixed(2)})</div>`).join('')}
         <strong>ברמנים:</strong>
-        ${barWorkers.map((w,i) => `<div>${w.name}: ₪${barTips[i].toFixed(2)}</div>`).join('')}
+        ${barWorkers.map((w,i) => `<div>${w.name}: ₪${barTips[i].toFixed(2)} (ש"ש: ₪${(barTips[i]/w.hours).toFixed(2)})</div>`).join('')}
       `;
 
       document.getElementById("results").innerHTML = html;
