@@ -156,7 +156,14 @@
       const calculatedWages = waiters.map(w => w.hours * w.stars * waitersTipPerHour);
       const hourlyRates = waiters.map((w, i) => calculatedWages[i] / w.hours);
 
-      const restaurantPercent = hourlyRates.some(rate => rate > 90) ? 0.17 : 0.15;
+        let restaurantPercent;
+        if (hourlyRates.some(rate => rate > 100)) {
+            restaurantPercent = 0.20;       // מעל 100 ₪ לשעה -> 20%
+        } else if (hourlyRates.some(rate => rate > 90)) {
+            restaurantPercent = 0.17;       // מעל 90 ₪ לשעה -> 17%
+        } else {
+            restaurantPercent = 0.15;       // אחרת -> 15%
+        }
       const restaurantCut = remainingAfterBar * restaurantPercent;
 
       const finalForWaiters = remainingAfterBar - restaurantCut;
