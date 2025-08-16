@@ -119,7 +119,7 @@
   <h1>מחשבון חלוקת טיפים</h1>
   <label for="totalTip">סה"כ טיפים (₪):</label>
   <input type="number" id="totalTip" placeholder="הזן סכום טיפים" />
- <label for="isWeekend"><input type="checkbox" id="isWeekend" /> סופ"ש?</label>
+  <label for="isWeekend"><input type="checkbox" id="isWeekend" /> סופ"ש?</label>
 
   <div class="group bartenders-group">
     <h3>ברמנים</h3>
@@ -133,6 +133,7 @@
   </div>
   <button onclick="calculateTips()">חשב חלוקה</button>
   <div class="summary" id="results"></div>
+
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       window.barCount = 0;
@@ -169,47 +170,67 @@
 
     function getWorkers(type) {
       const container = document.getElementById(type + "Container");
-      const divs = [...container.querySelectorAll(".group")];
+      const divs = [...container.querySelectorAll(".group.dynamic-group")];
       return divs.map((div, i) => {
-        const name = div.querySelector(`input[id^=${type}Name]`).value || `עובד ${i+1}`;
-        const hours = parseFloat(div.querySelector(`input[id^=${type}Hours]`).value) || 0;
+        const name = div.querySelector(`input[id^=${type}Name]`)?.value || `עובד ${i+1}`;
+        const hours = parseFloat(div.querySelector(`input[id^=${type}Hours]`)?.value) || 0;
         let stars = 6;
-        if (div.querySelector(`input[id^=${type}HasStars]`).checked) {
+        const hasStars = div.querySelector(`input[id^=${type}HasStars]`)?.checked;
+        if (hasStars) {
           const sel = div.querySelector(`input[name^=${type}Stars]:checked`);
-          if (sel) stars = parseInt(sel.value);
+          if (sel) stars = parseInt(sel.value, 10);
         }
         return hours > 0 ? {name, hours, stars} : null;
-      }).filter(x => x);
+      }).filter(Boolean);
     }
 
     function calculateTips() {
       const totalTip = parseFloat(document.getElementById("totalTip").value) || 0;
       const isWeekend = document.getElementById("isWeekend").checked;
       const barTipPercent = isWeekend ? 0.15 : 0.12;
+
+      const barWorkers = getWorkers("bar");
+      const waiters = getWorkers("waiter");
+
       const barTip = totalTip * barTipPercent;
       const remainingAfterBar = totalTip - barTip;
 
-      const waiters = getWorkers("waiter");
-      const effUnits = waiters.reduce((sum, w) => sum + w.hours * w.stars, 0);
+      // אם אין מלצרים או שאין שעות — מנגנון הגנה
       const totalHours = waiters.reduce((sum, w) => sum + w.hours, 0);
-
-      let restPercent = 0.15;
-      let restCut = remainingAfterBar * restPercent;
-      let finalForWaiters = remainingAfterBar - restCut;
-      let avgHourlyWage = totalHours ? finalForWaiters / totalHours : 0;
-
-      if (avgHourlyWage > 90) {
-        restPercent = 0.17;
-        restCut = remainingAfterBar * restPercent;
-        finalForWaiters = remainingAfterBar - restCut;
-        avgHourlyWage = totalHours ? finalForWaiters / totalHours : 0;
+      if (totalTip <= 0 || totalHours <= 0) {
+        document.getElementById("results").innerHTML = "<div>נא להזין טיפ חיובי ולפחות מלצר אחד עם שעות > 0.</div>";
+        return;
       }
 
-      const tips = waiters.map(w => w.hours * w.stars * (effUnits ? finalForWaiters / effUnits : 0));
+      // קביעה קונסיסטנטית של אחוז מסעדה לפי השכר השעתי לאחר ההפרשה:
+      // avgHourly = (remainingAfterBar * (1 - p)) / totalHours
+      // קודם נבדוק 20%: אם avgHourly_20 ≥ 100 ⇒ 20%
+      // אחרת נבדוק 17%: אם avgHourly_17 ≥ 90 ⇒ 17%
+      // אחרת 15%.
+      const avgHourlyWith = (p) => (remainingAfterBar * (1 - p)) / totalHours;
 
-      const barWorkers = getWorkers("bar");
+      let restPercent;
+      if (avgHourlyWith(0.20) >= 100) {
+        restPercent = 0.20;
+      } else if (avgHourlyWith(0.17) >= 90) {
+        restPercent = 0.17;
+      } else {
+        restPercent = 0.15;
+      }
+
+      const restCut = remainingAfterBar * restPercent;
+      const finalForWaiters = remainingAfterBar - restCut;
+
+      // חלוקה למלצרים לפי "שעות*כוכבים"
+      const effUnits = waiters.reduce((sum, w) => sum + w.hours * w.stars, 0);
+      const perEffUnit = effUnits ? (finalForWaiters / effUnits) : 0;
+      const tips = waiters.map(w => w.hours * w.stars * perEffUnit);
+      const avgHourlyWage = finalForWaiters / totalHours;
+
+      // חלוקת בר: אם בחרת להשתמש בכוכבים גם בבר — נשאיר סימטרי (שעות*כוכבים). אם לא סומן כוכבים — הכוכבים נשארים 6 ברירת מחדל בדיוק כפי שהקוד עבד.
       const totalBarUnits = barWorkers.reduce((s, w) => s + w.hours * w.stars, 0);
-      const barTips = barWorkers.map(w => w.hours * w.stars * (totalBarUnits ? barTip / totalBarUnits : 0));
+      const perBarUnit = totalBarUnits ? (barTip / totalBarUnits) : 0;
+      const barTipsArr = barWorkers.map(w => w.hours * w.stars * perBarUnit);
 
       let html = `
         <span class="highlight">סיכום כללי:</span>
@@ -217,13 +238,17 @@
         <div>הפרשה לבר: ₪${barTip.toFixed(2)} (${(barTipPercent*100).toFixed(0)}%)</div>
         <div>הפרשה למסעדה: ₪${restCut.toFixed(2)} (${(restPercent*100).toFixed(0)}%)</div>
         <div>טיפ נטו למלצרים: ₪${finalForWaiters.toFixed(2)}</div>
-        <div>שכר שעתי ממוצע למלצרים: ₪${avgHourlyWage.toFixed(2)}</div>
+        <div>שכר שעתי ממוצע למלצרים (לאחר ההפרשה): ₪${avgHourlyWage.toFixed(2)}</div>
         <hr/>
         <span class="highlight">פירוט לפי עובד:</span>
         <strong>מלצרים:</strong>
-        ${waiters.map((w,i) => `<div>${w.name}: ₪${tips[i].toFixed(2)} (ש"ש: ₪${(tips[i]/w.hours).toFixed(2)})</div>`).join('')}
+        ${waiters.map((w,i) => `
+          <div>${w.name}: ₪${tips[i].toFixed(2)} (ש"ש: ₪${(w.hours ? (tips[i]/w.hours) : 0).toFixed(2)})</div>
+        `).join('')}
         <strong>ברמנים:</strong>
-        ${barWorkers.map((w,i) => `<div>${w.name}: ₪${barTips[i].toFixed(2)} (ש"ש: ₪${(barTips[i]/w.hours).toFixed(2)})</div>`).join('')}
+        ${barWorkers.map((w,i) => `
+          <div>${w.name}: ₪${barTipsArr[i].toFixed(2)} (ש"ש: ₪${(w.hours ? (barTipsArr[i]/w.hours) : 0).toFixed(2)})</div>
+        `).join('')}
       `;
 
       document.getElementById("results").innerHTML = html;
