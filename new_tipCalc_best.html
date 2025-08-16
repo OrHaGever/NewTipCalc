@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>מחשבון חלוקת טיפים - מעודכן</title>
+  <title>מחשבון חלוקת טיפים</title>
   <style>
     body {
       font-family: sans-serif;
@@ -156,20 +155,19 @@
       const calculatedWages = waiters.map(w => w.hours * w.stars * waitersTipPerHour);
       const hourlyRates = waiters.map((w, i) => calculatedWages[i] / w.hours);
 
-        let restaurantPercent;
-        if (hourlyRates.some(rate => rate > 100)) {
-            restaurantPercent = 0.20;       // מעל 100 ₪ לשעה -> 20%
-        } else if (hourlyRates.some(rate => rate > 90)) {
-            restaurantPercent = 0.17;       // מעל 90 ₪ לשעה -> 17%
-        } else {
-            restaurantPercent = 0.15;       // אחרת -> 15%
-        }
+      // כאן עודכן לפי המדיניות החדשה
+      let restaurantPercent;
+      if (hourlyRates.some(rate => rate > 100)) {
+        restaurantPercent = 0.20;  // מעל 100 ש"ח לשעה -> 20%
+      } else if (hourlyRates.some(rate => rate > 90)) {
+        restaurantPercent = 0.17;  // מעל 90 לשעה -> 17%
+      } else {
+        restaurantPercent = 0.15;  // אחרת -> 15%
+      }
+
       const restaurantCut = remainingAfterBar * restaurantPercent;
-
       const finalForWaiters = remainingAfterBar - restaurantCut;
-
       const adjustedPerHour = effectiveWaiterHours === 0 ? 0 : finalForWaiters / effectiveWaiterHours;
-
       const finalTips = waiters.map(w => w.hours * w.stars * adjustedPerHour);
 
       const barWorkers = getWorkers("bar");
