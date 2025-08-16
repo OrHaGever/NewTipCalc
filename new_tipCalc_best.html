@@ -3,179 +3,298 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>מחשבון חלוקת טיפים</title>
+  <title>מחשבון חלוקת טיפים — גרסה סופית</title>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-      background: #f8f9fa;
-      color: #212529;
-      max-width: 700px;
-      margin: auto;
+    :root{
+      --bg:#f6f7f9;--fg:#1f2328;--card:#ffffff;--muted:#6a737d;--accent:#0d6efd;
+      --ok:#198754;--warn:#fd7e14;--err:#dc3545;--border:#d0d7de;
     }
-    h1 { text-align: center; }
-    label { display: block; margin: 0.5rem 0 0.2rem; }
-    input, select, button {
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    .group {
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-      background: #fff;
-    }
-    .flex-row { display: flex; gap: 0.5rem; align-items: center; }
-    .remove-btn {
-      background: #dc3545; color: white; border: none;
-      padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer;
-    }
-    .remove-btn:hover { background: #c82333; }
-    .star-options { display: none; gap: 0.5rem; margin-top: 0.5rem; }
-    .summary { background: #e9ecef; padding: 1rem; border-radius: 6px; }
-    .highlight { font-weight: bold; font-size: 1.2em; }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
+      background:var(--bg);color:var(--fg);margin:0;padding:2rem;line-height:1.45}
+    h1{margin:0 0 1rem;text-align:center}
+    .container{max-width:820px;margin:0 auto}
+    .group{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem}
+    label{display:block;margin:.35rem 0 .2rem}
+    input,select,button{width:100%;padding:.55rem .7rem;border:1px solid var(--border);border-radius:8px}
+    input[type="checkbox"]{width:auto;transform:scale(1.1);margin-inline-start:.3rem}
+    .row{display:flex;gap:.6rem;align-items:center}
+    .row > *{flex:1}
+    .btn{background:var(--accent);color:#fff;border:none;cursor:pointer}
+    .btn-outline{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+    .remove{background:var(--err);color:#fff;border:none}
+    .pill{display:inline-block;padding:.15rem .5rem;border:1px solid var(--border);border-radius:999px;font-size:.85rem;color:var(--muted)}
+    .summary{background:#eef2ff;border:1px solid #d6dbff;border-radius:10px;padding:1rem}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.6rem}
+    .star-options{display:none;margin-top:.3rem}
+    .mt{margin-top:.6rem}
+    .table{width:100%;border-collapse:collapse;margin-top:.8rem}
+    .table th,.table td{border:1px solid var(--border);padding:.45rem;text-align:start}
+    .right{text-align:right}
+    .muted{color:var(--muted)}
+    .actions{display:flex;gap:.5rem;flex-wrap:wrap}
+    .hr{border:none;border-top:1px solid var(--border);margin:.9rem 0}
+    @media (max-width:520px){.row{flex-direction:column;align-items:stretch}}
   </style>
 </head>
 <body>
-  <h1>מחשבון חלוקת טיפים</h1>
-  <label>סה"כ טיפים (₪):</label>
-  <input type="number" id="totalTip" />
+<div class="container">
+  <h1>מחשבון חלוקת טיפים — גרסה סופית</h1>
 
-  <label><input type="checkbox" id="isWeekend" /> משמרת סופ"ש</label>
+  <div class="group">
+    <div class="grid">
+      <div>
+        <label>סה"כ טיפים (₪)</label>
+        <input type="number" id="totalTip" min="0" step="0.01" placeholder="לדוגמה: 2450" />
+      </div>
+      <div>
+        <label>סופ"ש?</label>
+        <div class="row">
+          <input type="checkbox" id="isWeekend" />
+          <span class="pill">משפיע רק על % בר</span>
+        </div>
+      </div>
+      <div>
+        <label>% בר חול</label>
+        <input type="number" id="barPctWeek" min="0" max="100" step="0.1" value="12">
+      </div>
+      <div>
+        <label>% בר סופ"ש</label>
+        <input type="number" id="barPctWeekend" min="0" max="100" step="0.1" value="15">
+      </div>
+      <div>
+        <label>עיגול תשלום</label>
+        <select id="roundStep">
+          <option value="0">ללא עיגול</option>
+          <option value="0.5">0.5 ₪</option>
+          <option value="1">1 ₪</option>
+        </select>
+      </div>
+    </div>
+    <div class="muted mt">* חישוב מסעדה: ≥100 ₪/שעה ⇒ 20%, ≥90 ₪/שעה ⇒ 17%, אחרת 15%.</div>
+  </div>
 
   <div class="group">
     <h3>ברמנים</h3>
     <div id="barContainer"></div>
-    <button onclick="addWorker('bar')">➕ הוסף ברמן</button>
+    <div class="actions mt">
+      <button class="btn" onclick="addWorker('bar')">➕ הוסף ברמן</button>
+      <button class="btn-outline" onclick="addPreset('bar')">↺ הוסף פרופיל לדוגמה</button>
+    </div>
   </div>
 
   <div class="group">
     <h3>מלצרים</h3>
     <div id="waiterContainer"></div>
-    <button onclick="addWorker('waiter')">➕ הוסף מלצר</button>
+    <div class="actions mt">
+      <button class="btn" onclick="addWorker('waiter')">➕ הוסף מלצר</button>
+      <button class="btn-outline" onclick="addPreset('waiter')">↺ הוסף פרופיל לדוגמה</button>
+    </div>
   </div>
 
-  <button onclick="calculateTips()" style="background:#007bff;color:white;">חשב חלוקה</button>
+  <div class="actions">
+    <button class="btn" onclick="calculateTips()">חשב חלוקה</button>
+    <button class="btn-outline" onclick="exportCSV()">CSV ייצוא</button>
+    <button class="btn-outline" onclick="resetAll()">איפוס</button>
+  </div>
 
-  <div class="summary" id="results"></div>
+  <div class="summary mt" id="results">
+    הזן נתונים ולחץ "חשב חלוקה".
+  </div>
+</div>
 
-  <script>
-    let barCount = 0;
-    let waiterCount = 0;
+<script>
+  let barIdx = 0, waiterIdx = 0;
+  const fmt = (n)=> new Intl.NumberFormat('he-IL',{style:'currency',currency:'ILS',maximumFractionDigits:2}).format(n||0);
 
-    function addWorker(type) {
-      const container = document.getElementById(type + "Container");
-      const id = (type === "bar" ? barCount++ : waiterCount++);
-      const div = document.createElement("div");
-      div.className = "group";
-      div.innerHTML = `
-        <div class="flex-row">
-          <input placeholder="שם" id="${type}Name${id}" />
-          <input type="number" placeholder="שעות עבודה" id="${type}Hours${id}" />
+  function addWorker(type, data={}){
+    const container = document.getElementById(type+'Container');
+    const id = (type==='bar'? barIdx++ : waiterIdx++);
+    const div = document.createElement('div');
+    div.className='group';
+    div.innerHTML = `
+      <div class="row">
+        <input placeholder="שם" id="${type}Name${id}" value="${data.name||''}"/>
+        <input type="number" placeholder="שעות" id="${type}Hours${id}" min="0" step="0.01" value="${data.hours??''}"/>
+      </div>
+      <label class="mt"><input type="checkbox" id="${type}HasStars${id}" ${data.stars? 'checked':''} onchange="toggleStars('${type}',${id})"/> כוכבים/דרגה</label>
+      <div class="star-options" id="${type}StarsOptions${id}">
+        <div class="row">
+          <label><input type="radio" name="${type}Stars${id}" value="3"> 3⭐ (הכי נמוך)</label>
+          <label><input type="radio" name="${type}Stars${id}" value="4"> 4⭐</label>
+          <label><input type="radio" name="${type}Stars${id}" value="5"> 5⭐</label>
+          <label><input type="radio" name="${type}Stars${id}" value="6"> 6⭐ (ברירת מחדל)</label>
         </div>
-        <label><input type="checkbox" id="${type}HasStars${id}" onchange="toggleStars('${type}', ${id})" /> כוכבים?</label>
-        <div class="star-options" id="${type}StarsOptions${id}">
-          <label><input type="radio" name="${type}Stars${id}" value="3" /> 3⭐</label>
-          <label><input type="radio" name="${type}Stars${id}" value="4" /> 4⭐</label>
-          <label><input type="radio" name="${type}Stars${id}" value="5" /> 5⭐</label>
-        </div>
-        <button class="remove-btn" onclick="this.parentElement.remove()">🗑️ הסר</button>
-      `;
-      container.appendChild(div);
+        <div class="muted">אם לא מסומן — נספר כ-6⭐.</div>
+      </div>
+      <div class="actions mt">
+        <button class="remove" onclick="this.closest('.group').remove()">🗑️ הסר</button>
+      </div>`;
+    container.appendChild(div);
+    if(data.stars){
+      toggleStars(type,id,true);
+      const radio = div.querySelector(`input[name='${type}Stars${id}'][value='${data.stars}']`);
+      if(radio) radio.checked = true;
     }
+  }
 
-    function toggleStars(type, id) {
-      const box = document.getElementById(`${type}StarsOptions${id}`);
-      box.style.display = box.style.display === "flex" ? "none" : "flex";
-    }
+  function toggleStars(type,id,forceOpen=false){
+    const box = document.getElementById(`${type}StarsOptions${id}`);
+    if(forceOpen){ box.style.display='block'; return; }
+    box.style.display = (box.style.display==='block' ? 'none' : 'block');
+  }
 
-    function getWorkers(type) {
-      const container = document.getElementById(type + "Container");
-      const divs = container.querySelectorAll(".group");
-      const workers = [];
-      divs.forEach((div, i) => {
-        const name = div.querySelector(`input[id^=${type}Name]`).value || `עובד ${i+1}`;
-        const hours = parseFloat(div.querySelector(`input[id^=${type}Hours]`).value || 0);
-        let stars = 6; // ברירת מחדל (אם אין כוכבים מסומנים)
-        const hasStars = div.querySelector(`input[id^=${type}HasStars]`).checked;
-        if (hasStars) {
-          const selected = div.querySelector(`input[name^=${type}Stars]:checked`);
-          if (selected) stars = parseInt(selected.value);
-        }
-        if (hours > 0) workers.push({ name, hours, stars });
-      });
-      return workers;
-    }
-
-    function calculateTips() {
-      const totalTip = parseFloat(document.getElementById("totalTip").value || 0);
-      const isWeekend = document.getElementById("isWeekend").checked;
-
-      // 1) חישוב חלק הבר
-      const barTipPercent = isWeekend ? 0.15 : 0.12;
-      const barTip = totalTip * barTipPercent;
-      const remainingAfterBar = totalTip - barTip;
-
-      // 2) חישוב נתוני המלצרים
-      const waiters = getWorkers("waiter");
-      const effectiveWaiterHours = waiters.reduce((sum, w) => sum + w.hours * w.stars, 0);
-      const waitersTipPerHourBeforeRestaurant = effectiveWaiterHours === 0 ? 0 : remainingAfterBar / effectiveWaiterHours;
-
-      // שכר שעתי "לפני מסעדה" (תלוי רק בשקלול כוכבים)
-      const preHourlyRates = waiters.map(w => w.stars * waitersTipPerHourBeforeRestaurant);
-      const maxPreHourly = preHourlyRates.length ? Math.max(...preHourlyRates) : 0;
-
-      // 3) קביעת אחוז מסעדה לפי השכר השעתי "אחרי" ההפרשה
-      // אם גם אחרי 17% עדיין מעל 100 -> מעלים ל-20%
-      // אחרת אם אחרי 17% מעל 90 -> 17%
-      // אחרת -> 15%
-      let restaurantPercent;
-      const maxAfter20 = maxPreHourly * 0.80;
-      const maxAfter17 = maxPreHourly * 0.83;
-
-      if (maxAfter17 > 100) {
-        restaurantPercent = 0.20;
-      } else if (maxAfter17 > 90) {
-        restaurantPercent = 0.17;
-      } else {
-        restaurantPercent = 0.15;
+  function getWorkers(type){
+    const container = document.getElementById(type+'Container');
+    const groups = container.querySelectorAll('.group');
+    const out = [];
+    groups.forEach((g,i)=>{
+      const name = g.querySelector(`input[id^='${type}Name']`)?.value?.trim() || `עובד ${i+1}`;
+      const hours = parseFloat(g.querySelector(`input[id^='${type}Hours']`)?.value||0);
+      let stars = 6;
+      const hasStars = g.querySelector(`input[id^='${type}HasStars']`)?.checked;
+      if(hasStars){
+        const selected = g.querySelector(`input[name='${type}Stars${i}']:checked`) || g.querySelector(`input[name^='${type}Stars']:checked`);
+        if(selected) stars = parseInt(selected.value,10);
       }
+      if(hours>0) out.push({name, hours, stars});
+    });
+    return out;
+  }
 
-      // 4) חישוב סופי אחרי מסעדה
-      const restaurantCut = remainingAfterBar * restaurantPercent;
-      const finalForWaiters = remainingAfterBar - restaurantCut;
+  function roundToStep(value, step){
+    if(!step || step<=0) return value;
+    const k = Math.round(value/step)*step;
+    return Math.round((k + Number.EPSILON)*100)/100;
+  }
 
-      const adjustedPerHour = effectiveWaiterHours === 0 ? 0 : finalForWaiters / effectiveWaiterHours;
-      const finalTips = waiters.map(w => w.hours * w.stars * adjustedPerHour);
+  function calculateTips(){
+    const totalTip = Math.max(0, parseFloat(document.getElementById('totalTip').value || 0));
+    const isWeekend = document.getElementById('isWeekend').checked;
+    const barPct = Math.max(0, Math.min(100, parseFloat((isWeekend? document.getElementById('barPctWeekend').value : document.getElementById('barPctWeek').value) || 0)));
+    const roundStep = parseFloat(document.getElementById('roundStep').value || 0);
 
-      // 5) חלוקת הברמנים לפי שעות
-      const barWorkers = getWorkers("bar");
-      const totalBarHours = barWorkers.reduce((sum, w) => sum + w.hours, 0);
-      const barHourly = totalBarHours === 0 ? 0 : barTip / totalBarHours;
-      const finalBarTips = barWorkers.map(w => w.hours * barHourly);
+    const barWorkers = getWorkers('bar');
+    const waiters = getWorkers('waiter');
 
-      // 6) תצוגה
-      let html = `
-        <div><span class="highlight">סיכום כללי:</span></div>
-        <div>סה"כ טיפ: ₪${totalTip.toFixed(2)}</div>
-        <div>הפרשה לבר: ₪${barTip.toFixed(2)} (${(barTipPercent*100).toFixed(0)}%)</div>
-        <div>הפרשה למסעדה: ₪${restaurantCut.toFixed(2)} (${(restaurantPercent*100).toFixed(0)}%)</div>
-        <div>טיפ נטו למלצרים: ₪${finalForWaiters.toFixed(2)}</div>
-        <div>שכר שעתי למלצרים (אחרי כוכבים): ₪${adjustedPerHour.toFixed(2)}</div>
-        <hr />
-        <div><span class="highlight">פירוט לפי עובד:</span></div>
-        <div><strong>מלצרים:</strong></div>
-        ${waiters.map((w, i) => `<div>${w.name}: ₪${finalTips[i].toFixed(2)}</div>`).join("")}
-        <div><strong>ברמנים:</strong></div>
-        ${barWorkers.map((w, i) => `<div>${w.name}: ₪${finalBarTips[i].toFixed(2)}</div>`).join("")}
-      `;
-      document.getElementById("results").innerHTML = html;
+    if(totalTip<=0){ return showMsg('אנא הזן סכום טיפ חיובי.'); }
+    if(waiters.length===0 && barWorkers.length===0){ return showMsg('יש להוסיף לפחות עובד אחד.'); }
+
+    const barTip = totalTip * (barPct/100);
+    const remainingAfterBar = totalTip - barTip;
+
+    const effWaiterHours = waiters.reduce((s,w)=> s + (w.hours * w.stars), 0);
+    const tmpPerEffHour = effWaiterHours ? (remainingAfterBar / effWaiterHours) : 0;
+
+    const prelimHourly = waiters.map(w => (w.hours * w.stars * tmpPerEffHour) / (w.hours || 1));
+
+    // קביעת אחוז מסעדה לפי התעריף השעתי (לפני ניכוי)
+    // 100 ₪ בדיוק ⇒ 20%, 90 ₪ בדיוק ⇒ 17%
+    const maxHourly = prelimHourly.length ? Math.max(...prelimHourly) : 0;
+    let restaurantPercent = 0.15;
+    if (maxHourly >= 100) {
+      restaurantPercent = 0.20;
+    } else if (maxHourly >= 90) {
+      restaurantPercent = 0.17;
+    } else {
+      restaurantPercent = 0.15;
     }
-  </script>
-</body>
-</html>
+
+    const restaurantCut = remainingAfterBar * restaurantPercent;
+    const finalForWaiters = Math.max(0, remainingAfterBar - restaurantCut);
+    const perEffHour = effWaiterHours ? (finalForWaiters / effWaiterHours) : 0;
+
+    const waitersAlloc = waiters.map(w => roundToStep(w.hours * w.stars * perEffHour, roundStep));
+    const totalBarHours = barWorkers.reduce((s,w)=> s + w.hours, 0);
+    const barHourly = totalBarHours ? (barTip / totalBarHours) : 0;
+    const barAlloc = barWorkers.map(w => roundToStep(w.hours * barHourly, roundStep));
+
+    const waiterRows = waiters.map((w,i)=>({name:w.name,hours:w.hours,stars:w.stars, pay:waitersAlloc[i], rate: (w.hours? waitersAlloc[i]/w.hours : 0)}));
+    const barRows = barWorkers.map((w,i)=>({name:w.name,hours:w.hours, pay:barAlloc[i], rate: (w.hours? barAlloc[i]/w.hours : 0)}));
+
+    waiterRows.sort((a,b)=>b.pay-a.pay);
+    barRows.sort((a,b)=>b.pay-a.pay);
+
+    let html = `
+      <div class='right'><b>סיכום כללי</b></div>
+      <div class='grid'>
+        <div>סה"כ טיפ: <b>${fmt(totalTip)}</b></div>
+        <div>לבר: <b>${fmt(barTip)}</b> (${barPct.toFixed(1)}%)</div>
+        <div>למסעדה: <b>${fmt(restaurantCut)}</b> (${(restaurantPercent*100).toFixed(0)}%)</div>
+        <div>נטו מלצרים: <b>${fmt(finalForWaiters)}</b></div>
+        <div>שכר שעתי ממוצע למלצרים (אחרי כוכבים): <b>${fmt(perEffHour)}</b> לשעת-כוכב</div>
+      </div>
+      <div class='hr'></div>
+      <div class='right'><b>מלצרים</b></div>
+      ${waiterRows.length? tableHTML(waiterRows,true) : '<div class="muted">אין מלצרים.</div>'}
+      <div class='hr'></div>
+      <div class='right'><b>ברמנים</b></div>
+      ${barRows.length? tableHTML(barRows,false) : '<div class="muted">אין ברמנים.</div>'}
+    `;
+    document.getElementById('results').innerHTML = html;
+
+    saveState();
+  }
+
+  function tableHTML(rows, withStars){
+    const head = withStars
+      ? '<tr><th>שם</th><th>שעות</th><th>⭐</th><th>שכר שעתי</th><th>סכום</th></tr>'
+      : '<tr><th>שם</th><th>שעות</th><th>שכר שעתי</th><th>סכום</th></tr>';
+    const body = rows.map(r=> withStars
+      ? `<tr><td>${escapeHTML(r.name)}</td><td>${r.hours}</td><td>${r.stars}</td><td>${fmt(r.rate)}</td><td>${fmt(r.pay)}</td></tr>`
+      : `<tr><td>${escapeHTML(r.name)}</td><td>${r.hours}</td><td>${fmt(r.rate)}</td><td>${fmt(r.pay)}</td></tr>`
+    ).join('');
+    return `<table class="table">${head}${body}</table>`;
+  }
+
+  function showMsg(msg){ document.getElementById('results').innerHTML = `<span class="muted">${escapeHTML(msg)}</span>`; }
+
+  function escapeHTML(s){ return (s||'').replace(/[&<>"']/g, m=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+  function exportCSV(){
+    const rows = [];
+    const totalTip = parseFloat(document.getElementById('totalTip').value||0);
+    const isWeekend = document.getElementById('isWeekend').checked;
+    const barPct = (isWeekend? parseFloat(document.getElementById('barPctWeekend').value||0) : parseFloat(document.getElementById('barPctWeek').value||0));
+    rows.push(['סה"כ טיפ', totalTip]);
+    rows.push(['% בר', barPct]);
+    rows.push([]);
+    rows.push(['סוג','שם','שעות','כוכבים','שכר שעתי','סכום']);
+    const waiters = getWorkers('waiter');
+    const barWorkers = getWorkers('bar');
+
+    calculateTips();
+    const table = document.querySelectorAll('#results table');
+
+    if(table[0]){
+      const trs = table[0].querySelectorAll('tr');
+      trs.forEach((tr,i)=>{
+        if(i===0) return;
+        const tds = tr.querySelectorAll('td');
+        rows.push(['מלצר', tds[0].innerText, tds[1].innerText, tds[2].innerText, tds[3].innerText, tds[4].innerText]);
+      });
+    }
+    if(table[1]){
+      const trs = table[1].querySelectorAll('tr');
+      trs.forEach((tr,i)=>{
+        if(i===0) return;
+        const tds = tr.querySelectorAll('td');
+        rows.push(['ברמן', tds[0].innerText, tds[1].innerText, '', tds[2].innerText, tds[3].innerText]);
+      });
+    }
+
+    const csv = rows.map(r => r.map(v=> `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download='tips_export.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function addPreset(type){
+    if(type==='bar'){
+      addWorker('bar',{name:'ברמן א׳',hours:7});
+      addWorker('bar',{name:'ברמן ב׳',hours:6});
+    }else{
+      addWorker('waiter',{name:'מלצר א׳',hours:8,stars:6});
+      addWorker('wait
