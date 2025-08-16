@@ -13,13 +13,8 @@
       max-width: 700px;
       margin: auto;
     }
-    h1 {
-      text-align: center;
-    }
-    label {
-      display: block;
-      margin: 0.5rem 0 0.2rem;
-    }
+    h1 { text-align: center; }
+    label { display: block; margin: 0.5rem 0 0.2rem; }
     input, select, button {
       padding: 0.5rem;
       margin-bottom: 1rem;
@@ -35,36 +30,15 @@
       margin-bottom: 1.5rem;
       background: #fff;
     }
-    .flex-row {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
+    .flex-row { display: flex; gap: 0.5rem; align-items: center; }
     .remove-btn {
-      background: #dc3545;
-      color: white;
-      border: none;
-      padding: 0.4rem 0.8rem;
-      border-radius: 4px;
-      cursor: pointer;
+      background: #dc3545; color: white; border: none;
+      padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer;
     }
-    .remove-btn:hover {
-      background: #c82333;
-    }
-    .star-options {
-      display: none;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
-    .summary {
-      background: #e9ecef;
-      padding: 1rem;
-      border-radius: 6px;
-    }
-    .highlight {
-      font-weight: bold;
-      font-size: 1.2em;
-    }
+    .remove-btn:hover { background: #c82333; }
+    .star-options { display: none; gap: 0.5rem; margin-top: 0.5rem; }
+    .summary { background: #e9ecef; padding: 1rem; border-radius: 6px; }
+    .highlight { font-weight: bold; font-size: 1.2em; }
   </style>
 </head>
 <body>
@@ -127,7 +101,7 @@
       divs.forEach((div, i) => {
         const name = div.querySelector(`input[id^=${type}Name]`).value || `עובד ${i+1}`;
         const hours = parseFloat(div.querySelector(`input[id^=${type}Hours]`).value || 0);
-        let stars = 6;
+        let stars = 6; // ברירת מחדל (אם אין כוכבים מסומנים)
         const hasStars = div.querySelector(`input[id^=${type}HasStars]`).checked;
         if (hasStars) {
           const selected = div.querySelector(`input[name^=${type}Stars]:checked`);
@@ -142,39 +116,50 @@
       const totalTip = parseFloat(document.getElementById("totalTip").value || 0);
       const isWeekend = document.getElementById("isWeekend").checked;
 
+      // 1) חישוב חלק הבר
       const barTipPercent = isWeekend ? 0.15 : 0.12;
       const barTip = totalTip * barTipPercent;
       const remainingAfterBar = totalTip - barTip;
 
+      // 2) חישוב נתוני המלצרים
       const waiters = getWorkers("waiter");
-      const waitersHours = waiters.reduce((sum, w) => sum + w.hours, 0);
-
       const effectiveWaiterHours = waiters.reduce((sum, w) => sum + w.hours * w.stars, 0);
-      let waitersTipPerHour = effectiveWaiterHours === 0 ? 0 : remainingAfterBar / effectiveWaiterHours;
+      const waitersTipPerHourBeforeRestaurant = effectiveWaiterHours === 0 ? 0 : remainingAfterBar / effectiveWaiterHours;
 
-      const calculatedWages = waiters.map(w => w.hours * w.stars * waitersTipPerHour);
-      const hourlyRates = waiters.map((w, i) => calculatedWages[i] / w.hours);
+      // שכר שעתי "לפני מסעדה" (תלוי רק בשקלול כוכבים)
+      const preHourlyRates = waiters.map(w => w.stars * waitersTipPerHourBeforeRestaurant);
+      const maxPreHourly = preHourlyRates.length ? Math.max(...preHourlyRates) : 0;
 
-      // כאן עודכן לפי המדיניות החדשה
+      // 3) קביעת אחוז מסעדה לפי השכר השעתי "אחרי" ההפרשה
+      // אם גם אחרי 17% עדיין מעל 100 -> מעלים ל-20%
+      // אחרת אם אחרי 17% מעל 90 -> 17%
+      // אחרת -> 15%
       let restaurantPercent;
-      if (hourlyRates.some(rate => rate > 100)) {
-        restaurantPercent = 0.20;  // מעל 100 ש"ח לשעה -> 20%
-      } else if (hourlyRates.some(rate => rate > 90)) {
-        restaurantPercent = 0.17;  // מעל 90 לשעה -> 17%
+      const maxAfter20 = maxPreHourly * 0.80;
+      const maxAfter17 = maxPreHourly * 0.83;
+
+      if (maxAfter17 > 100) {
+        restaurantPercent = 0.20;
+      } else if (maxAfter17 > 90) {
+        restaurantPercent = 0.17;
       } else {
-        restaurantPercent = 0.15;  // אחרת -> 15%
+        restaurantPercent = 0.15;
       }
 
+      // 4) חישוב סופי אחרי מסעדה
       const restaurantCut = remainingAfterBar * restaurantPercent;
       const finalForWaiters = remainingAfterBar - restaurantCut;
+
       const adjustedPerHour = effectiveWaiterHours === 0 ? 0 : finalForWaiters / effectiveWaiterHours;
       const finalTips = waiters.map(w => w.hours * w.stars * adjustedPerHour);
 
+      // 5) חלוקת הברמנים לפי שעות
       const barWorkers = getWorkers("bar");
       const totalBarHours = barWorkers.reduce((sum, w) => sum + w.hours, 0);
       const barHourly = totalBarHours === 0 ? 0 : barTip / totalBarHours;
       const finalBarTips = barWorkers.map(w => w.hours * barHourly);
 
+      // 6) תצוגה
       let html = `
         <div><span class="highlight">סיכום כללי:</span></div>
         <div>סה"כ טיפ: ₪${totalTip.toFixed(2)}</div>
@@ -189,7 +174,6 @@
         <div><strong>ברמנים:</strong></div>
         ${barWorkers.map((w, i) => `<div>${w.name}: ₪${finalBarTips[i].toFixed(2)}</div>`).join("")}
       `;
-
       document.getElementById("results").innerHTML = html;
     }
   </script>
