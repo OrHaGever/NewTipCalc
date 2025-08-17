@@ -6,7 +6,7 @@
   <title>מחשבון חלוקת טיפים - מהיר ומותאם מובייל</title>
   <meta name="theme-color" content="#0d6efd"/>
   <style>
-    /* ====== Design tokens (lightweight) ====== */
+    /* ====== Design tokens ====== */
     :root{
       --bg:#f7f8fa;
       --card:#ffffff;
@@ -59,17 +59,19 @@
     .row{display:flex; gap:.6rem; align-items:center; flex-wrap:wrap}
     .row > *{flex:1}
     label{display:block; font-size:.95rem; margin:.25rem 0}
+
+    /* === קלטים: קיבוע לרקע לבן + טקסט שחור, בכל מצב תאורה === */
     input[type="number"], input[type="text"], select{
       width:100%; height:var(--touch);
       border:1px solid var(--border);
       border-radius:10px;
       padding:.6rem .75rem;
-      background:#fff;
-      color:var(--text);
+      background:#ffffff !important;
+      color:#111827 !important;
+      caret-color:#111827;
     }
-    @media (prefers-color-scheme: dark){
-      input,select{background:#0b1218; color:var(--text)}
-    }
+    ::placeholder{color:#6b7280}
+
     input[type="checkbox"]{inline-size:1.2rem; block-size:1.2rem}
 
     .btn{
@@ -94,25 +96,24 @@
     }
     .actions{display:flex; gap:.5rem; flex-wrap:wrap}
 
-    /* סכימת צבעים אינטואיטיבית לשורות עובדים */
+    /* צבעים אינטואיטיביים לשורות עובדים */
     .row-good{background:linear-gradient(0deg, rgba(25,135,84,.06), rgba(25,135,84,.06)); border-left:4px solid var(--ok)}
     .row-warn{background:linear-gradient(0deg, rgba(253,126,20,.07), rgba(253,126,20,.07)); border-left:4px solid var(--warn)}
     .row-bad {background:linear-gradient(0deg, rgba(220,53,69,.07), rgba(220,53,69,.07)); border-left:4px solid var(--danger)}
     .person{
-      display:grid; grid-template-columns:1.2fr .7fr .7fr .9fr .9fr; gap:.5rem; align-items:center;
+      display:grid; grid-template-columns:1.2fr .7fr .9fr 1fr 1fr; gap:.5rem; align-items:center;
       padding:.45rem .6rem; border:1px solid var(--border); border-radius:10px;
     }
     @media (max-width:520px){
       .person{grid-template-columns:1fr 1fr}
       .person .meta{grid-column:1 / -1; display:flex; gap:.5rem; flex-wrap:wrap; color:var(--muted); font-size:.9rem}
-      .hide-sm{display:none}
     }
 
     .summary{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:.6rem}
     .kpi{border:1px solid var(--border); border-radius:10px; padding:.6rem}
     .kpi b{display:block; font-size:1.05rem}
 
-    /* כפתור חשב צף לתפעול בנייד ביד אחת */
+    /* כפתור חשב צף */
     .fab{
       position:fixed; inset:auto env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
       right:18px; bottom:18px; left:18px;
@@ -178,11 +179,9 @@
   <div class="fab"><button class="btn" onclick="calculateTips()">חשב חלוקה</button></div>
 
 <script>
-  // ========== Utility ==========
   const money = n => new Intl.NumberFormat('he-IL',{style:'currency',currency:'ILS',maximumFractionDigits:2}).format(+n||0);
-
-  // ========== Dynamic workers ==========
   let barCount=0, waiterCount=0;
+
   window.addEventListener('DOMContentLoaded', ()=>{
     addWorker('bar'); addWorker('waiter');
   });
@@ -194,10 +193,11 @@
     wrap.className='group';
     wrap.innerHTML = `
       <div class="person">
-        <input placeholder="שם" id="${type}Name${id}" />
+        <input type="text" placeholder="שם" id="${type}Name${id}" />
         <input type="number" step="0.01" inputmode="decimal" placeholder="שעות" id="${type}Hours${id}" />
-        <label class="hide-sm"><input type="checkbox" id="${type}HasStars${id}" onchange="toggleStars('${type}',${id})"/> כוכבים</label>
-        <div class="meta hide-sm">ברירת מחדל: 6⭐ אם לא נבחר</div>
+        <!-- החשוב: הכפתור לבחירת כוכבים נראה גם במובייל -->
+        <label><input type="checkbox" id="${type}HasStars${id}" onchange="toggleStars('${type}',${id})"/> כוכבים</label>
+        <div class="meta">ברירת מחדל: 6⭐ אם לא נבחר</div>
         <div class="meta">
           <span class="muted">תעריף יופיע לאחר חישוב</span>
         </div>
@@ -236,7 +236,6 @@
     return out;
   }
 
-  // ========== Core calculation (same business rules) ==========
   function calculateTips(){
     const totalTip = Math.max(0, parseFloat(document.getElementById('totalTip').value)||0);
     const isWeekend = document.getElementById('isWeekend').checked;
@@ -245,7 +244,6 @@
     const barWorkers = getWorkers('bar');
     const waiters = getWorkers('waiter');
 
-    // Guards
     const totalWaiterHours = waiters.reduce((s,w)=>s+w.hours,0);
     if(totalTip<=0 || totalWaiterHours<=0){
       renderKpis({totalTip, barTip:0, barPct, restCut:0, restPct:0, finalWaiters:0, avgHourly:0});
@@ -253,12 +251,10 @@
       return;
     }
 
-    // Split bar
     const barTip = totalTip * barPct;
     const remainingAfterBar = totalTip - barTip;
 
-    // Decide restaurant percent by avg hourly AFTER deduction:
-    // avgHourly(p) = (remainingAfterBar * (1 - p)) / totalWaiterHours
+    // אחוז מסעדה לפי שכר שעתי ממוצע לאחר ההפרשה
     const avgHourlyWith = p => (remainingAfterBar * (1-p)) / totalWaiterHours;
     let restPct;
     if(avgHourlyWith(0.20) >= 100){ restPct = 0.20; }
@@ -268,21 +264,19 @@
     const restCut = remainingAfterBar * restPct;
     const finalForWaiters = remainingAfterBar - restCut;
 
-    // Waiters split by hours*stars
+    // חלוקה למלצרים לפי שעות*כוכבים
     const eff = waiters.reduce((s,w)=> s + w.hours*w.stars, 0);
     const perEff = eff ? finalForWaiters/eff : 0;
     const waiterPays = waiters.map(w=> ({...w, pay: w.hours*w.stars*perEff, rate: (w.hours? (w.hours*w.stars*perEff)/w.hours : 0)}));
 
-    // Bar split (hours*stars symmetric)
+    // חלוקת בר סימטרית (שעות*כוכבים)
     const effBar = barWorkers.reduce((s,w)=> s + w.hours*w.stars, 0);
     const perBar = effBar ? barTip/effBar : 0;
     const barPays = barWorkers.map(w=> ({...w, pay: w.hours*w.stars*perBar, rate: (w.hours? (w.hours*w.stars*perBar)/w.hours : 0)}));
 
-    // Render KPIs
     const avgHourly = finalForWaiters / totalWaiterHours;
     renderKpis({totalTip, barTip, barPct, restCut, restPct, finalWaiters:finalForWaiters, avgHourly});
 
-    // Render lists with intuitive colors (thresholds: ±5% סביב הממוצע)
     const tol = 0.05; // 5%
     const res = [];
     if(waiterPays.length){
@@ -290,7 +284,6 @@
       waiterPays.forEach(w=>{
         const cls = classifyRow(w.rate, avgHourly, tol);
         res.push(rowHTML(w.name, w.hours, w.stars, w.rate, w.pay, cls));
-        // צבע את ה-node המקורי גם (שימושי לבקרה ויזואלית)
         w.node.classList.remove('row-good','row-warn','row-bad');
         if(cls) w.node.classList.add(cls);
       });
@@ -298,7 +291,6 @@
     if(barPays.length){
       res.push(`<div class="muted" style="margin:.6rem 0 .2rem">ברמנים</div>`);
       barPays.forEach(w=>{
-        // בבר אין השוואה לממוצע המלצרים; נציג ללא קידוד צבעוני
         res.push(rowHTML(w.name, w.hours, w.stars, w.rate, w.pay, ''));
       });
     }
