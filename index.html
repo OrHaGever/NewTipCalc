@@ -1,6 +1,5 @@
 
 <!DOCTYPE html>
-<html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8"/>
@@ -14,11 +13,13 @@
 
   <style>
     :root{
-      --bg:#f6f7f9;
+      --bg:#f4f6f8;
       --fg:#1f2328;
       --card:#ffffff;
+      --card-soft:#f8fafc;
       --muted:#6a737d;
       --accent:#0d6efd;
+      --accent-soft:rgba(13,110,253,.10);
       --ok:#198754;
       --warn:#fd7e14;
       --err:#dc3545;
@@ -26,9 +27,10 @@
       --input-bg:#ffffff;
       --input-fg:#111827;
       --focus:rgba(13,110,253,.25);
+      --shadow:0 1px 5px rgba(15,23,42,.06);
       --gap:.9rem;
       --touch:52px;
-      --radius:12px;
+      --radius:16px;
     }
 
     @media (prefers-color-scheme: dark){
@@ -36,11 +38,13 @@
         --bg:#0b0f14;
         --fg:#e5e7eb;
         --card:#0f141b;
+        --card-soft:#111827;
         --muted:#9aa3af;
         --border:#1f2937;
         --input-bg:#1b2430;
         --input-fg:#e5e7eb;
         --focus:rgba(13,110,253,.35);
+        --shadow:none;
       }
     }
 
@@ -53,7 +57,7 @@
       padding:
         env(safe-area-inset-top)
         env(safe-area-inset-right)
-        calc(100px + env(safe-area-inset-bottom))
+        calc(104px + env(safe-area-inset-bottom))
         env(safe-area-inset-left);
       background:var(--bg);
       color:var(--fg);
@@ -64,13 +68,15 @@
     }
 
     h1{
-      margin:1rem 0 .5rem;
+      margin:1rem 0 .8rem;
       text-align:center;
-      font-size:1.35rem;
+      font-size:1.45rem;
+      font-weight:800;
     }
 
     h3{
-      margin:.2rem 0 .6rem;
+      margin:.1rem 0 .7rem;
+      font-size:1.05rem;
     }
 
     .container{
@@ -82,7 +88,16 @@
       border:1px solid var(--border);
       border-radius:var(--radius);
       padding:var(--gap);
-      margin-bottom:.8rem;
+      margin-bottom:.85rem;
+      box-shadow:var(--shadow);
+    }
+
+    .section-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.6rem;
+      margin-bottom:.6rem;
     }
 
     .row{
@@ -98,32 +113,29 @@
 
     label{
       display:block;
-      margin:.25rem 0 .2rem;
+      margin:.25rem 0 .25rem;
       font-size:.95rem;
     }
 
     input,
-    select,
     button{
       font-size:16px;
     }
 
     input[type="number"],
-    input[type="text"],
-    select{
+    input[type="text"]{
       width:100%;
       height:var(--touch);
       border:1px solid var(--border);
-      border-radius:10px;
-      padding:.6rem .75rem;
+      border-radius:12px;
+      padding:.65rem .8rem;
       background:var(--input-bg);
       color:var(--input-fg);
       caret-color:var(--input-fg);
     }
 
     input[type="text"]:focus,
-    input[type="number"]:focus,
-    select:focus{
+    input[type="number"]:focus{
       outline:none;
       border-color:var(--accent);
       box-shadow:0 0 0 3px var(--focus);
@@ -138,6 +150,7 @@
       inline-size:1.2rem;
       block-size:1.2rem;
       cursor:pointer;
+      accent-color:var(--accent);
     }
 
     .btn{
@@ -146,7 +159,7 @@
       border-radius:999px;
       background:var(--accent);
       color:#fff;
-      font-weight:600;
+      font-weight:700;
       cursor:pointer;
       padding:0 1rem;
     }
@@ -173,16 +186,17 @@
       display:flex;
       gap:.5rem;
       flex-wrap:wrap;
-      margin-top:.4rem;
+      margin-top:.5rem;
     }
 
     .pill{
       display:inline-block;
-      padding:.15rem .5rem;
+      padding:.2rem .65rem;
       border:1px solid var(--border);
       border-radius:999px;
-      font-size:.85rem;
+      font-size:.9rem;
       color:var(--muted);
+      background:var(--card-soft);
     }
 
     .hr{
@@ -193,36 +207,132 @@
 
     .grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:.65rem;
+    }
+
+    .worker-card{
+      background:var(--card-soft);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:.7rem;
+      margin-bottom:.65rem;
+    }
+
+    .worker-main{
+      display:grid;
+      grid-template-columns:1.2fr .8fr 40px;
+      gap:.5rem;
+      align-items:center;
+    }
+
+    .stars-line{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
       gap:.6rem;
+      margin-top:.6rem;
+      flex-wrap:wrap;
+    }
+
+    .stars-options{
+      display:none;
+      gap:.65rem;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:.55rem;
+      padding:.55rem;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--card);
+    }
+
+    .toggle-row{
+      display:flex;
+      gap:.7rem;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:.75rem;
+    }
+
+    .toggle-label{
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      user-select:none;
+      cursor:pointer;
+    }
+
+    .disabled-option{
+      opacity:.45;
+      pointer-events:none;
+    }
+
+    .kpi-card{
+      background:var(--card-soft);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:.75rem;
+      min-height:70px;
+    }
+
+    .kpi-card span{
+      display:block;
+      color:var(--muted);
+      font-size:.88rem;
+      margin-bottom:.2rem;
+    }
+
+    .kpi-card b{
+      display:block;
+      font-size:1.05rem;
     }
 
     .row-good{
-      background:linear-gradient(0deg, rgba(25,135,84,.06), rgba(25,135,84,.06));
+      background:linear-gradient(0deg, rgba(25,135,84,.08), rgba(25,135,84,.08));
       border-right:4px solid var(--ok);
     }
 
     .row-warn{
-      background:linear-gradient(0deg, rgba(253,126,20,.07), rgba(253,126,20,.07));
+      background:linear-gradient(0deg, rgba(253,126,20,.09), rgba(253,126,20,.09));
       border-right:4px solid var(--warn);
     }
 
     .row-bad{
-      background:linear-gradient(0deg, rgba(220,53,69,.07), rgba(220,53,69,.07));
+      background:linear-gradient(0deg, rgba(220,53,69,.09), rgba(220,53,69,.09));
       border-right:4px solid var(--err);
+    }
+
+    .table-wrap{
+      overflow-x:auto;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--card);
+      margin-top:.55rem;
     }
 
     .table{
       width:100%;
       border-collapse:collapse;
-      margin-top:.8rem;
+      min-width:520px;
     }
 
     .table th,
     .table td{
-      border:1px solid var(--border);
-      padding:.45rem;
+      border-bottom:1px solid var(--border);
+      padding:.55rem;
       text-align:start;
+      white-space:nowrap;
+    }
+
+    .table tr:last-child td{
+      border-bottom:none;
+    }
+
+    .table th{
+      color:var(--muted);
+      font-weight:700;
+      background:var(--card-soft);
     }
 
     .fab{
@@ -235,6 +345,8 @@
 
     .fab .btn{
       width:100%;
+      min-height:58px;
+      box-shadow:0 10px 30px rgba(13,110,253,.22);
     }
 
     .bottom-spacer{
@@ -245,25 +357,14 @@
       color:var(--muted);
     }
 
-    .disabled-option{
-      opacity:.45;
-      pointer-events:none;
-    }
+    @media(max-width:480px){
+      .worker-main{
+        grid-template-columns:1fr .75fr 40px;
+      }
 
-    .toggle-row{
-      display:flex;
-      gap:1rem;
-      flex-wrap:wrap;
-      align-items:center;
-      margin-top:.4rem;
-    }
-
-    .toggle-label{
-      display:flex;
-      align-items:center;
-      gap:.5rem;
-      user-select:none;
-      cursor:pointer;
+      .grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
     }
   </style>
 </head>
@@ -275,60 +376,19 @@
   <h1>מחשבון חלוקת טיפים</h1>
 
   <div class="group">
-
-    <div class="grid">
-
-      <div>
-        <label for="totalTip">סה"כ טיפים (₪)</label>
-        <input
-          type="number"
-          id="totalTip"
-          min="0"
-          step="0.01"
-          inputmode="decimal"
-          placeholder="2450"
-        />
-      </div>
-
-      <div>
-        <label for="barPctWeek">% בר חול</label>
-        <input
-          type="number"
-          id="barPctWeek"
-          min="0"
-          max="100"
-          step="0.1"
-          inputmode="decimal"
-          value="12"
-        >
-      </div>
-
-      <div>
-        <label for="barPctWeekend">% בר סופ"ש</label>
-        <input
-          type="number"
-          id="barPctWeekend"
-          min="0"
-          max="100"
-          step="0.1"
-          inputmode="decimal"
-          value="15"
-        >
-      </div>
-
-      <div>
-        <label for="roundStep">עיגול תשלום</label>
-        <select id="roundStep">
-          <option value="0">ללא עיגול</option>
-          <option value="0.5">0.5 ₪</option>
-          <option value="1">1 ₪</option>
-        </select>
-      </div>
-
+    <div>
+      <label for="totalTip">סה"כ טיפים (₪)</label>
+      <input
+        type="number"
+        id="totalTip"
+        min="0"
+        step="0.01"
+        inputmode="decimal"
+        placeholder="2450"
+      />
     </div>
 
     <div class="toggle-row">
-
       <label class="toggle-label" for="enableBarCut">
         <input
           id="enableBarCut"
@@ -343,20 +403,14 @@
         <input type="checkbox" id="isWeekend">
         <span class="pill">סופ"ש</span>
       </label>
-
     </div>
-
-    <div class="muted" style="margin-top:.5rem">
-      * אחוז מסעדה נקבע לפי ש"ש ממוצע למלצרים לאחר ההפרשה:
-      ≥100 ⇒ 20%,
-      ≥90 ⇒ 17%,
-      אחרת ⇒ 15%.
-    </div>
-
   </div>
 
   <div class="group">
-    <h3>ברמנים</h3>
+    <div class="section-title">
+      <h3>ברמנים</h3>
+    </div>
+
     <div id="barContainer"></div>
 
     <div class="actions">
@@ -367,7 +421,10 @@
   </div>
 
   <div class="group">
-    <h3>מלצרים</h3>
+    <div class="section-title">
+      <h3>מלצרים</h3>
+    </div>
+
     <div id="waiterContainer"></div>
 
     <div class="actions">
@@ -378,36 +435,37 @@
   </div>
 
   <div class="group" id="summary">
-
     <div class="grid">
-
-      <div>
-        סה"כ טיפ:
+      <div class="kpi-card">
+        <span>סה"כ טיפ</span>
         <b id="kTotal">₪0.00</b>
       </div>
 
-      <div>
-        לבר:
-        <b id="kBar">₪0.00</b>
-        <span class="muted" id="kBarPct">(0%)</span>
+      <div class="kpi-card">
+        <span>לבר</span>
+        <b>
+          <span id="kBar" style="display:inline">₪0.00</span>
+          <small class="muted" id="kBarPct">(0%)</small>
+        </b>
       </div>
 
-      <div>
-        למסעדה:
-        <b id="kRest">₪0.00</b>
-        <span class="muted" id="kRestPct">(0%)</span>
+      <div class="kpi-card">
+        <span>למסעדה</span>
+        <b>
+          <span id="kRest" style="display:inline">₪0.00</span>
+          <small class="muted" id="kRestPct">(0%)</small>
+        </b>
       </div>
 
-      <div>
-        נטו מלצרים:
+      <div class="kpi-card">
+        <span>נטו מלצרים</span>
         <b id="kWaitersNet">₪0.00</b>
       </div>
 
-      <div>
-        ש"ש ממוצע:
+      <div class="kpi-card">
+        <span>ש"ש ממוצע</span>
         <b id="kAvgHr">₪0.00</b>
       </div>
-
     </div>
 
     <div class="hr"></div>
@@ -419,7 +477,6 @@
 
     <div><b>ברמנים</b></div>
     <div id="barTableWrap" class="muted">אין נתונים.</div>
-
   </div>
 
   <div class="bottom-spacer"></div>
@@ -435,6 +492,9 @@
 <script>
 let barIdx = 0;
 let waiterIdx = 0;
+
+const BAR_PCT_WEEK = 12;
+const BAR_PCT_WEEKEND = 15;
 
 const fmt = n =>
   new Intl.NumberFormat(
@@ -472,11 +532,10 @@ function addWorker(type,data={}){
   const id = type === 'bar' ? barIdx++ : waiterIdx++;
 
   const div = document.createElement('div');
-  div.className = 'group';
+  div.className = 'worker-card';
 
   div.innerHTML = `
-    <div class="row">
-
+    <div class="worker-main">
       <input
         type="text"
         placeholder="שם"
@@ -495,87 +554,72 @@ function addWorker(type,data={}){
         value="${data.hours ?? ''}"
       />
 
+      <button
+        class="remove"
+        title="מחק עובד"
+        aria-label="מחק עובד"
+        onclick="this.closest('.worker-card').remove()"
+      >
+        🗑️
+      </button>
     </div>
 
-    <div class="row" style="align-items:center;justify-content:space-between">
+    <div class="stars-line">
+      <label class="toggle-label" for="${type}HasStars${id}">
+        <input
+          type="checkbox"
+          id="${type}HasStars${id}"
+          ${data.stars ? 'checked' : ''}
+          onchange="toggleStars('${type}',${id})"
+        />
+        כוכבים?
+      </label>
+    </div>
 
-      <div>
-
-        <label class="toggle-label" for="${type}HasStars${id}">
-          <input
-            type="checkbox"
-            id="${type}HasStars${id}"
-            ${data.stars ? 'checked' : ''}
-            onchange="toggleStars('${type}',${id})"
-          />
-          כוכבים/דרגה
-        </label>
-
-        <div
-          class="row"
-          id="${type}StarsOptions${id}"
-          style="display:${data.stars ? 'flex' : 'none'};gap:.8rem"
+    <div
+      class="stars-options"
+      id="${type}StarsOptions${id}"
+      style="display:${data.stars ? 'flex' : 'none'}"
+    >
+      <label class="toggle-label">
+        <input
+          type="radio"
+          name="${type}Stars${id}"
+          value="3"
+          ${data.stars === 3 ? 'checked' : ''}
         >
+        3⭐
+      </label>
 
-          <label class="toggle-label">
-            <input
-              type="radio"
-              name="${type}Stars${id}"
-              value="3"
-              ${data.stars === 3 ? 'checked' : ''}
-            >
-            3⭐
-          </label>
-
-          <label class="toggle-label">
-            <input
-              type="radio"
-              name="${type}Stars${id}"
-              value="4"
-              ${data.stars === 4 ? 'checked' : ''}
-            >
-            4⭐
-          </label>
-
-          <label class="toggle-label">
-            <input
-              type="radio"
-              name="${type}Stars${id}"
-              value="5"
-              ${data.stars === 5 ? 'checked' : ''}
-            >
-            5⭐
-          </label>
-
-          <label class="toggle-label">
-            <input
-              type="radio"
-              name="${type}Stars${id}"
-              value="6"
-              ${!data.stars || data.stars === 6 ? 'checked' : ''}
-            >
-            6⭐
-          </label>
-
-        </div>
-
-        <div class="muted" style="margin-top:.2rem">
-          אם לא מסומן — נספר כ־6⭐.
-        </div>
-
-      </div>
-
-      <div class="actions" style="flex:0">
-        <button
-          class="remove"
-          title="מחק עובד"
-          aria-label="מחק עובד"
-          onclick="this.closest('.group').remove()"
+      <label class="toggle-label">
+        <input
+          type="radio"
+          name="${type}Stars${id}"
+          value="4"
+          ${data.stars === 4 ? 'checked' : ''}
         >
-          🗑️
-        </button>
-      </div>
+        4⭐
+      </label>
 
+      <label class="toggle-label">
+        <input
+          type="radio"
+          name="${type}Stars${id}"
+          value="5"
+          ${data.stars === 5 ? 'checked' : ''}
+        >
+        5⭐
+      </label>
+
+      <label class="toggle-label">
+        <input
+          type="radio"
+          name="${type}Stars${id}"
+          value="6"
+          ${!data.stars || data.stars === 6 ? 'checked' : ''}
+        >
+        6⭐
+      </label>
     </div>
   `;
 
@@ -591,19 +635,19 @@ function toggleStars(type,id){
 
 function getWorkers(type){
   const container = document.getElementById(type+'Container');
-  const groups = container.querySelectorAll('.group');
+  const cards = container.querySelectorAll('.worker-card');
   const out = [];
 
-  groups.forEach((g,i)=>{
+  cards.forEach((card,i)=>{
     const name =
-      g.querySelector(`input[id^='${type}Name']`)
+      card.querySelector(`input[id^='${type}Name']`)
       ?.value
       ?.trim()
       || `עובד ${i+1}`;
 
     let hours =
       parseFloat(
-        g.querySelector(`input[id^='${type}Hours']`)
+        card.querySelector(`input[id^='${type}Hours']`)
         ?.value || 0
       );
 
@@ -612,11 +656,11 @@ function getWorkers(type){
     let stars = 6;
 
     const hasStars =
-      g.querySelector(`input[id^='${type}HasStars']`)
+      card.querySelector(`input[id^='${type}HasStars']`)
       ?.checked;
 
     if(hasStars){
-      const sel = g.querySelector(`input[name^='${type}Stars']:checked`);
+      const sel = card.querySelector(`input[name^='${type}Stars']:checked`);
       if(sel){
         stars = parseInt(sel.value,10);
       }
@@ -626,8 +670,7 @@ function getWorkers(type){
       out.push({
         name,
         hours,
-        stars,
-        node:g
+        stars
       });
     }
   });
@@ -635,13 +678,8 @@ function getWorkers(type){
   return out;
 }
 
-function roundToStep(value,step){
-  if(!step || step <= 0){
-    return Math.round((value + Number.EPSILON) * 100) / 100;
-  }
-
-  const k = Math.round(value / step) * step;
-  return Math.round((k + Number.EPSILON) * 100) / 100;
+function roundMoney(value){
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 function calculateTips(){
@@ -655,23 +693,8 @@ function calculateTips(){
   const enableBarCut = document.getElementById('enableBarCut').checked;
 
   const barPct = enableBarCut
-    ? Math.max(
-        0,
-        Math.min(
-          100,
-          parseFloat(
-            (
-              isWeekend
-                ? document.getElementById('barPctWeekend').value
-                : document.getElementById('barPctWeek').value
-            ) || 0
-          )
-        )
-      )
+    ? (isWeekend ? BAR_PCT_WEEKEND : BAR_PCT_WEEK)
     : 0;
-
-  const roundStep =
-    parseFloat(document.getElementById('roundStep').value || 0);
 
   const barWorkers = getWorkers('bar');
   const waiters = getWorkers('waiter');
@@ -730,10 +753,7 @@ function calculateTips(){
 
   const waitersAlloc =
     waiters.map(w =>
-      roundToStep(
-        w.hours * w.stars * perEffHour,
-        roundStep
-      )
+      roundMoney(w.hours * w.stars * perEffHour)
     );
 
   const effBar =
@@ -744,10 +764,7 @@ function calculateTips(){
 
   const barAlloc =
     barWorkers.map(w =>
-      roundToStep(
-        w.hours * w.stars * perBarUnit,
-        roundStep
-      )
+      roundMoney(w.hours * w.stars * perBarUnit)
     );
 
   const avgHourly =
@@ -799,7 +816,7 @@ function renderSummary(k, waiterRows, barRows, avgHourly=0){
     fmt(k.barTip || 0);
 
   document.getElementById('kBarPct').innerText =
-    `(${(k.barPct || 0).toFixed(1)}%)`;
+    `(${(k.barPct || 0).toFixed(0)}%)`;
 
   document.getElementById('kRest').innerText =
     fmt(k.restCut || 0);
@@ -841,16 +858,18 @@ function renderSummary(k, waiterRows, barRows, avgHourly=0){
       }).join('');
 
     document.getElementById('waitersTableWrap').innerHTML = `
-      <table class="table">
-        <tr>
-          <th>שם</th>
-          <th>שעות</th>
-          <th>⭐</th>
-          <th>ש"ש</th>
-          <th>סכום</th>
-        </tr>
-        ${body}
-      </table>
+      <div class="table-wrap">
+        <table class="table">
+          <tr>
+            <th>שם</th>
+            <th>שעות</th>
+            <th>⭐</th>
+            <th>ש"ש</th>
+            <th>סכום</th>
+          </tr>
+          ${body}
+        </table>
+      </div>
     `;
   }else{
     document.getElementById('waitersTableWrap').innerHTML =
@@ -870,16 +889,18 @@ function renderSummary(k, waiterRows, barRows, avgHourly=0){
       `).join('');
 
     document.getElementById('barTableWrap').innerHTML = `
-      <table class="table">
-        <tr>
-          <th>שם</th>
-          <th>שעות</th>
-          <th>⭐</th>
-          <th>ש"ש</th>
-          <th>סכום</th>
-        </tr>
-        ${body}
-      </table>
+      <div class="table-wrap">
+        <table class="table">
+          <tr>
+            <th>שם</th>
+            <th>שעות</th>
+            <th>⭐</th>
+            <th>ש"ש</th>
+            <th>סכום</th>
+          </tr>
+          ${body}
+        </table>
+      </div>
     `;
   }else{
     document.getElementById('barTableWrap').innerHTML =
@@ -916,4 +937,3 @@ function escapeAttr(s){
 
 </body>
 </html>
-```
