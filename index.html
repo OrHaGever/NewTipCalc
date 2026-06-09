@@ -516,19 +516,10 @@
           <input type="checkbox" id="isWeekend" onchange="updatePreview();">
           סופ״ש
         </label>
-      </div>
-    </section>
 
-    <section class="card" id="barSection">
-      <div class="section-head">
-        <h3>ברמנים</h3>
-        <button type="button" onclick="toggleSection('barBody', this)">סגור</button>
-      </div>
-      <div class="section-body" id="barBody">
-        <div id="barContainer"></div>
-        <div class="actions">
-          <button class="btn btn-outline" type="button" onclick="addWorker('bar'); updatePreview();">הוסף ברמן</button>
-        </div>
+        <button class="btn btn-plain" type="button" onclick="clearAllData()" style="height:44px;padding:0 .8rem;font-size:.9rem;flex:0 0 auto;">
+          נקה הכל
+        </button>
       </div>
     </section>
 
@@ -540,7 +531,20 @@
       <div class="section-body" id="waiterBody">
         <div id="waiterContainer"></div>
         <div class="actions">
-          <button class="btn btn-outline" type="button" onclick="addWorker('waiter'); updatePreview();">הוסף מלצר</button>
+          <button class="btn btn-outline" type="button" id="addWaiterBtn">הוסף מלצר</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="barSection">
+      <div class="section-head">
+        <h3>ברמנים</h3>
+        <button type="button" onclick="toggleSection('barBody', this)">סגור</button>
+      </div>
+      <div class="section-body" id="barBody">
+        <div id="barContainer"></div>
+        <div class="actions">
+          <button class="btn btn-outline" type="button" id="addBarBtn">הוסף ברמן</button>
         </div>
       </div>
     </section>
@@ -552,10 +556,15 @@
       </div>
 
       <div class="sheet-metrics">
-        <div class="metric"><span>ש״ש ממוצע</span><b id="sheetAvgHr">₪0.00</b></div>
+        <div class="metric"><span>סה״כ טיפ</span><b id="sheetTotal">₪0.00</b></div>
+        <div class="metric"><span>הפרשה לבר</span><b id="sheetBar">₪0.00</b></div>
+        <div class="metric"><span>הפרשה למסעדה</span><b id="sheetRest">₪0.00</b></div>
         <div class="metric"><span>נטו מלצרים</span><b id="sheetWaitersNet">₪0.00</b></div>
-        <div class="metric"><span>לבר</span><b id="sheetBar">₪0.00</b></div>
-        <div class="metric"><span>למסעדה</span><b id="sheetRest">₪0.00</b></div>
+        <div class="metric"><span>ממוצע שעתי</span><b id="sheetAvgHr">₪0.00</b></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-outline" type="button" id="shareWhatsappBtn">שלח סיכום לוואטסאפ</button>
       </div>
 
       <h3>מלצרים</h3>
@@ -574,7 +583,9 @@
 let barIdx = 0;
 let waiterIdx = 0;
 let lastResult = null;
+let isLoadingDraft = false;
 
+const STORAGE_KEY = 'tipsCalculatorDraftV1';
 const BAR_WEEK_PCT = 12;
 const BAR_WEEKEND_PCT = 15;
 const OUTLIER_TOLERANCE = 0.10;
@@ -587,18 +598,47 @@ const fmt = n =>
   }).format(Number.isFinite(n) ? n : 0);
 
 window.addEventListener('DOMContentLoaded', () => {
-  addWorker('bar');
-  addWorker('waiter');
+  const loaded = loadDraft();
+  if(!loaded){
+    addWorker('waiter');
+    addWorker('bar');
+  }
   toggleWeekendState();
   bindPreviewEvents();
+  bindActionButtons();
   updatePreview();
 });
+
+
+function bindActionButtons(){
+  const addWaiterBtn = document.getElementById('addWaiterBtn');
+  const addBarBtn = document.getElementById('addBarBtn');
+  const shareWhatsappBtn = document.getElementById('shareWhatsappBtn');
+
+  if(addWaiterBtn){
+    addWaiterBtn.addEventListener('click', () => handleAddWorker('waiter'));
+  }
+
+  if(addBarBtn){
+    addBarBtn.addEventListener('click', () => handleAddWorker('bar'));
+  }
+
+  if(shareWhatsappBtn){
+    shareWhatsappBtn.addEventListener('click', shareWhatsappSummary);
+  }
+}
+
+function handleAddWorker(type){
+  addWorker(type);
+  updatePreview();
+}
 
 function bindPreviewEvents(){
   document.body.addEventListener('input', event => {
     const target = event.target;
     if(target.matches('input[type="number"], input[type="text"], input[type="radio"]')){
       updatePreview();
+      saveDraft();
     }
   });
 
@@ -606,6 +646,7 @@ function bindPreviewEvents(){
     const target = event.target;
     if(target.matches('input[type="checkbox"], input[type="radio"]')){
       updatePreview();
+      saveDraft();
     }
   });
 }
@@ -638,7 +679,7 @@ function addWorker(type, data={}){
   const div = document.createElement('div');
   div.className = 'worker-card';
 
-  const hasStars = Boolean(data.stars);
+  const hasStars = Boolean(data.hasStars ?? data.stars);
   const stars = Number(data.stars || 6);
 
   div.innerHTML = `
@@ -677,6 +718,7 @@ function addWorker(type, data={}){
   `;
 
   container.appendChild(div);
+  saveDraft();
 }
 
 function toggleStars(type,id){
@@ -688,6 +730,7 @@ function toggleStars(type,id){
 function removeWorker(button){
   button.closest('.worker-card').remove();
   updatePreview();
+  saveDraft();
 }
 
 function getWorkers(type){
@@ -749,10 +792,17 @@ function getProjection(){
 function updatePreview(){
   const p = getProjection();
   renderKpis(p);
+  saveDraft();
 }
 
 function calculateTips(){
   const p = getProjection();
+
+  const validationMessage = getValidationMessage(p);
+  if(validationMessage){
+    alert(validationMessage);
+    return;
+  }
 
   if(p.totalTip <= 0 || (p.waiters.length === 0 && p.barWorkers.length === 0)){
     lastResult = null;
@@ -775,7 +825,7 @@ function calculateTips(){
       pay,
       rate:w.hours ? pay / w.hours : 0
     };
-  }).sort((a,b)=>b.pay-a.pay);
+  });
 
   const barEff = p.barWorkers.reduce((sum,w)=>sum + w.hours*w.stars,0);
   const barUnit = barEff ? p.barTip / barEff : 0;
@@ -789,7 +839,7 @@ function calculateTips(){
       pay,
       rate:w.hours ? pay / w.hours : 0
     };
-  }).sort((a,b)=>b.pay-a.pay);
+  });
 
   lastResult = {projection:p, waiterRows, barRows};
 
@@ -818,10 +868,11 @@ function renderKpis(p){
 }
 
 function renderSheetKpis(p){
-  document.getElementById('sheetAvgHr').textContent = fmt(p.avgHourly || 0);
-  document.getElementById('sheetWaitersNet').textContent = fmt(p.finalForWaiters || 0);
+  document.getElementById('sheetTotal').textContent = fmt(p.totalTip || 0);
   document.getElementById('sheetBar').textContent = `${fmt(p.barTip || 0)} (${(p.barPct || 0).toFixed(0)}%)`;
   document.getElementById('sheetRest').textContent = `${fmt(p.restCut || 0)} (${((p.restPct || 0)*100).toFixed(0)}%)`;
+  document.getElementById('sheetWaitersNet').textContent = fmt(p.finalForWaiters || 0);
+  document.getElementById('sheetAvgHr').textContent = fmt(p.avgHourly || 0);
 }
 
 function renderResults(waiterRows, barRows, avgHourly){
@@ -877,6 +928,146 @@ function openResults(){
 
 function closeResults(){
   document.getElementById('resultsPanel').hidden = true;
+}
+
+function getValidationMessage(p){
+  if(p.totalTip <= 0) return 'חסר סה״כ טיפים.';
+  if(p.waiters.length === 0 && p.barWorkers.length === 0) return 'לא הוזנו עובדים עם שעות.';
+  if(p.waiters.length === 0) return 'לא הוזנו מלצרים עם שעות.';
+  return '';
+}
+
+function collectWorkerDraft(type){
+  const container = document.getElementById(type+'Container');
+  return Array.from(container.querySelectorAll('.worker-card')).map(card => {
+    const name = card.querySelector(`input[id^='${type}Name']`)?.value || '';
+    const hours = card.querySelector(`input[id^='${type}Hours']`)?.value || '';
+    const hasStars = Boolean(card.querySelector(`input[id^='${type}HasStars']`)?.checked);
+    const selected = card.querySelector(`input[name^='${type}Stars']:checked`);
+    const stars = selected ? Number(selected.value) : 6;
+    return {name,hours,hasStars,stars};
+  });
+}
+
+function saveDraft(){
+  if(isLoadingDraft) return;
+  try{
+    const draft = {
+      totalTip: document.getElementById('totalTip')?.value || '',
+      enableBarCut: Boolean(document.getElementById('enableBarCut')?.checked),
+      isWeekend: Boolean(document.getElementById('isWeekend')?.checked),
+      waiters: collectWorkerDraft('waiter'),
+      bars: collectWorkerDraft('bar')
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+  }catch(e){}
+}
+
+function loadDraft(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+
+    const draft = JSON.parse(raw);
+    isLoadingDraft = true;
+
+    document.getElementById('totalTip').value = draft.totalTip || '';
+    document.getElementById('enableBarCut').checked = draft.enableBarCut !== false;
+    document.getElementById('isWeekend').checked = Boolean(draft.isWeekend);
+
+    document.getElementById('waiterContainer').innerHTML = '';
+    document.getElementById('barContainer').innerHTML = '';
+    waiterIdx = 0;
+    barIdx = 0;
+
+    const waiters = Array.isArray(draft.waiters) && draft.waiters.length ? draft.waiters : [{}];
+    const bars = Array.isArray(draft.bars) && draft.bars.length ? draft.bars : [{}];
+
+    waiters.forEach(worker => addWorker('waiter', worker));
+    bars.forEach(worker => addWorker('bar', worker));
+
+    isLoadingDraft = false;
+    return true;
+  }catch(e){
+    isLoadingDraft = false;
+    return false;
+  }
+}
+
+function clearAllData(){
+  if(!confirm('לנקות את כל הנתונים שהוזנו?')) return;
+
+  localStorage.removeItem(STORAGE_KEY);
+  lastResult = null;
+  waiterIdx = 0;
+  barIdx = 0;
+
+  document.getElementById('totalTip').value = '';
+  document.getElementById('enableBarCut').checked = true;
+  document.getElementById('isWeekend').checked = false;
+  document.getElementById('waiterContainer').innerHTML = '';
+  document.getElementById('barContainer').innerHTML = '';
+
+  addWorker('waiter');
+  addWorker('bar');
+  toggleWeekendState();
+  updatePreview();
+  closeResults();
+}
+
+function buildWhatsappText(){
+  if(!lastResult) return '';
+
+  const {projection:p, waiterRows, barRows} = lastResult;
+  const lines = [];
+
+  lines.push('סיכום חלוקת טיפים');
+  lines.push('');
+  lines.push(`סה״כ טיפ: ${fmt(p.totalTip)}`);
+  lines.push(`הפרשה לבר (${p.barPct.toFixed(0)}%): ${fmt(p.barTip)}`);
+  lines.push(`הפרשה למסעדה (${(p.restPct*100).toFixed(0)}%): ${fmt(p.restCut)}`);
+  lines.push(`נטו מלצרים: ${fmt(p.finalForWaiters)}`);
+  lines.push(`ממוצע שעתי: ${fmt(p.avgHourly)}`);
+
+  if(waiterRows.length){
+    lines.push('');
+    lines.push('מלצרים:');
+    waiterRows.forEach(row => {
+      lines.push(`${row.name} - ${formatNumber(row.hours)} שעות, ${row.stars} כוכבים, ${fmt(row.pay)}, ש״ש ${fmt(row.rate)}`);
+    });
+  }
+
+  if(barRows.length){
+    lines.push('');
+    lines.push('ברמנים:');
+    barRows.forEach(row => {
+      lines.push(`${row.name} - ${formatNumber(row.hours)} שעות, ${fmt(row.pay)}`);
+    });
+  }
+
+  return lines.join('\n');
+}
+
+function shareWhatsappSummary(){
+  if(!lastResult){
+    alert('קודם צריך לחשב חלוקה.');
+    return;
+  }
+
+  const text = buildWhatsappText();
+  if(!text){
+    alert('לא נוצר טקסט לסיכום.');
+    return;
+  }
+
+  const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+  const link = document.createElement('a');
+  link.href = url;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 }
 
 function roundCurrency(value){
